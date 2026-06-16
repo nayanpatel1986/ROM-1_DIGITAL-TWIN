@@ -14,19 +14,19 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host ""
 Write-Host "[2/2] Exporting Docker images to offline .tar archives..." -ForegroundColor Yellow
 
-Write-Host "- Exporting romii_backend.tar..." -ForegroundColor Cyan
-docker save romii_backend:latest -o romii_backend.tar
+Write-Host "- Exporting romi_backend.tar..." -ForegroundColor Cyan
+docker save romi_backend:latest -o romi_backend.tar
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error: Failed to save romii_backend image!" -ForegroundColor Red
+    Write-Host "Error: Failed to save romi_backend image!" -ForegroundColor Red
     Exit $LASTEXITCODE
 }
 
-Write-Host "- Exporting romii_frontend.tar..." -ForegroundColor Cyan
-docker save romii_frontend:latest -o romii_frontend.tar
+Write-Host "- Exporting romi_frontend.tar..." -ForegroundColor Cyan
+docker save romi_frontend:latest -o romi_frontend.tar
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error: Failed to save romii_frontend image!" -ForegroundColor Red
+    Write-Host "Error: Failed to save romi_frontend image!" -ForegroundColor Red
     Exit $LASTEXITCODE
 }
 

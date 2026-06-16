@@ -17,11 +17,11 @@ docker load -i telegraf.tar
 echo.
 
 echo - Loading Backend application...
-docker load -i romii_backend.tar
+docker load -i romi_backend.tar
 echo.
 
 echo - Loading Frontend interface...
-docker load -i romii_frontend.tar
+docker load -i romi_frontend.tar
 echo.
 
 echo ==========================================================

@@ -1,0 +1,12 @@
+.git
+.agents
+.codex
+backend/node_modules
+frontend/node_modules
+frontend/dist
+influxdb.tar
+romi_backend.tar
+romi_frontend.tar
+telegraf.tar
+out.txt
+*.log

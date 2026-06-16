@@ -2,8 +2,8 @@ const { InfluxDB } = require('@influxdata/influxdb-client');
 
 const INFLUX_URL = process.env.INFLUX_URL || 'http://localhost:8086';
 const INFLUX_TOKEN = process.env.INFLUX_TOKEN || 'my-super-secret-auth-token';
-const INFLUX_ORG = process.env.INFLUX_ORG || 'romii_org';
-const INFLUX_BUCKET = process.env.INFLUX_BUCKET || 'romii_bucket';
+const INFLUX_ORG = process.env.INFLUX_ORG || 'romi_org';
+const INFLUX_BUCKET = process.env.INFLUX_BUCKET || 'romi_bucket';
 
 const queryApi = new InfluxDB({ url: INFLUX_URL, token: INFLUX_TOKEN }).getQueryApi(INFLUX_ORG);
 

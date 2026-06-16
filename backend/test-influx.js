@@ -2,8 +2,8 @@ const { InfluxDB } = require('@influxdata/influxdb-client');
 
 const url = 'http://influxdb:8086'; // Adjust if needed
 const token = 'my-super-secret-auth-token';
-const org = 'romii_org';
-const bucket = 'romii_bucket';
+const org = 'romi_org';
+const bucket = 'romi_bucket';
 
 const queryApi = new InfluxDB({ url, token }).getQueryApi(org);
 

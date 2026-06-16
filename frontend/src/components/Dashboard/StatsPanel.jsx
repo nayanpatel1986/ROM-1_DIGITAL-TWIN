@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Paper, Typography, IconButton, Grid, Dialog, DialogTitle, DialogContent, FormControl, InputLabel, Select, MenuItem, Button, DialogActions } from '@mui/material';
-import { Settings, Edit2, Activity, Database } from 'lucide-react';
+import { Settings, Edit2, Activity } from 'lucide-react';
 
 const AVAILABLE_METRICS = [
     { key: 'hook_load', label: 'Hook Load', unit: 'tons' },
@@ -14,7 +14,7 @@ const AVAILABLE_METRICS = [
     { key: 'torque', label: 'Torque', unit: 'ft-lbs' },
     { key: 'flow_in', label: 'Flow In', unit: 'GPM' },
     { key: 'flow_out', label: 'Flow Out', unit: 'GPM' },
-    { key: 'oil_pressure', label: 'Oil Pressure', unit: 'psi' },
+    { key: 'oil_pressure', label: 'Oil Pressure', unit: 'kPa' },
     { key: 'spm1', label: 'SPM 1', unit: 'spm' },
     { key: 'spm2', label: 'SPM 2', unit: 'spm' },
     { key: 'trip_tank', label: 'Trip Tank', unit: 'm³' },
@@ -23,34 +23,41 @@ const AVAILABLE_METRICS = [
     { key: 'annular_pressure', label: 'Annular Pressure', unit: 'psi' },
     { key: 'manifold_pressure', label: 'Manifold Pressure', unit: 'psi' },
     { key: 'accumulator_pressure', label: 'Accumulator Pressure', unit: 'psi' },
+    { key: 'tong_torque', label: 'Tong Torque', unit: 'KNM' },
 ];
 
 const DEFAULT_CONFIG = [
-    { key: 'hook_load', label: 'HOOK LOAD', unit: 'tons' },
-    { key: 'bit_depth', label: 'BIT DEPTH', unit: 'ft' },
-    { key: 'wob', label: 'WOB', unit: 'kips' },
-    { key: 'pump_pressure', label: 'PUMP PRESS', unit: 'psi' }
+    { key: 'rig_air_pressure', label: 'Air Press.', unit: 'PSI' },
+    { key: 'torque', label: 'Rotary Torque', unit: 'ft-lbs' }
 ];
 
-const StatsPanel = ({ rigData }) => {
+const StatsPanel = ({ rigData, w, h, onParameterClick }) => {
     const [config, setConfig] = useState(DEFAULT_CONFIG);
     const [editMode, setEditMode] = useState(false);
-    const [editingSlot, setEditingSlot] = useState(null); // Index of slot being edited
+    const [editingSlot, setEditingSlot] = useState(null); 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    // Temporary state for the dialog
+    const isSmall = !h || h < 7;
+    const itemCols = w < 4 ? 12 : 6;
     const [tempConfig, setTempConfig] = useState({ key: '', label: '', unit: '' });
 
     useEffect(() => {
-        const saved = localStorage.getItem('romii_stats_panel_config_v3');
+        const saved = localStorage.getItem('romi_key_performance_config_v1');
         if (saved) {
-            setConfig(JSON.parse(saved));
+            try {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    setConfig(parsed);
+                }
+            } catch (e) {
+                console.warn("Failed to parse saved config", e);
+            }
         }
     }, []);
 
     const saveConfig = (newConfig) => {
         setConfig(newConfig);
-        localStorage.setItem('romii_stats_panel_config_v3', JSON.stringify(newConfig));
+        localStorage.setItem('romi_key_performance_config_v1', JSON.stringify(newConfig));
     };
 
     const handleEditClick = (index) => {
@@ -63,7 +70,6 @@ const StatsPanel = ({ rigData }) => {
 
     const handleSaveSlot = () => {
         const newConfig = [...config];
-        // Auto-set label and unit based on key if not manually overriden (simplification: just take defaults)
         const metric = AVAILABLE_METRICS.find(m => m.key === tempConfig.key);
 
         newConfig[editingSlot] = {
@@ -77,10 +83,10 @@ const StatsPanel = ({ rigData }) => {
     };
 
     const getValue = (key) => {
-        // Handle nested or flat data if needed, but rigData passed is usually flat from Dashboard
         let val = rigData[key];
         if (val === undefined || val === null) return '0';
         if (typeof val === 'number') {
+            if (key === 'hook_load') return val.toFixed(2);
             if (key.includes('depth')) return val.toFixed(1);
             if (key === 'wob') return val.toFixed(1);
             return val.toFixed(0);
@@ -89,43 +95,58 @@ const StatsPanel = ({ rigData }) => {
     };
 
     return (
-        <Box sx={{ mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, px: 1 }}>
-                <Typography variant="subtitle2" sx={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Activity size={16} /> KEY PERFORMANCE INDICATORS
-                </Typography>
+        <Box sx={{ p: isSmall ? 1.5 : 2, flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', width: '100%', height: '100%', position: 'relative' }}>
+            <Box sx={{ position: 'absolute', right: 8, top: 8, zIndex: 10 }}>
                 <IconButton
                     size="small"
                     onClick={() => setEditMode(!editMode)}
-                    sx={{ color: editMode ? '#fbbf24' : '#64748b', bgcolor: editMode ? 'rgba(251, 191, 36, 0.1)' : 'transparent' }}
+                    sx={{ 
+                        color: editMode ? '#fbbf24' : '#64748b', 
+                        bgcolor: editMode ? 'rgba(251, 191, 36, 0.1)' : 'rgba(15, 23, 42, 0.2)',
+                        '&:hover': { bgcolor: 'rgba(30, 41, 59, 0.6)' }
+                    }}
                 >
-                    <Settings size={14} />
+                    <Settings size={isSmall ? 12 : 14} />
                 </IconButton>
             </Box>
-
-            <Grid container spacing={2}>
+            <Grid 
+                container 
+                spacing={isSmall ? 1 : 2} 
+                sx={{ 
+                    flexGrow: 1, 
+                    overflow: 'auto',
+                    '&::-webkit-scrollbar': { display: 'none' },
+                }}
+            >
                 {config.map((item, index) => (
-                    <Grid item xs={6} md={3} key={index} sx={{ display: 'flex' }}>
+                    <Grid item xs={itemCols} key={index} sx={{ display: 'flex' }}>
                         <Paper
-                            onClick={() => handleEditClick(index)}
+                            onClick={() => {
+                                if (editMode) {
+                                    handleEditClick(index);
+                                } else if (onParameterClick) {
+                                    onParameterClick(item.key, item.label, item.unit);
+                                }
+                            }}
                             sx={{
                                 width: '100%',
-                                p: 2,
-                                bgcolor: '#1e293b',
+                                p: isSmall ? 1 : 1.5,
+                                bgcolor: 'rgba(30, 41, 59, 0.5)',
                                 color: 'white',
                                 textAlign: 'center',
-                                border: editMode ? '1px dashed #fbbf24' : '1px solid #334155',
-                                cursor: editMode ? 'pointer' : 'default',
+                                border: editMode ? '1px dashed #fbbf24' : '1px solid rgba(51, 65, 85, 0.5)',
+                                cursor: 'pointer',
                                 position: 'relative',
                                 borderRadius: 2,
-                                height: '116px',
+                                height: '100%',
+                                minHeight: isSmall ? '60px' : '100px',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                justifyContent: 'space-between',
+                                justifyContent: 'center',
                                 transition: 'all 0.2s',
                                 '&:hover': {
-                                    bgcolor: editMode ? '#334155' : '#1e293b',
-                                    transform: editMode ? 'scale(1.02)' : 'none'
+                                    bgcolor: 'rgba(30, 41, 59, 0.8)',
+                                    transform: 'translateY(-2px)'
                                 }
                             }}
                         >
@@ -134,15 +155,15 @@ const StatsPanel = ({ rigData }) => {
                                     <Edit2 size={12} />
                                 </Box>
                             )}
-                            <Typography variant="caption" sx={{ color: '#94a3b8', letterSpacing: 1, fontWeight: 'bold' }}>
+                            <Typography variant="caption" sx={{ color: '#94a3b8', letterSpacing: 1, fontWeight: 'bold', mb: 0.5, fontSize: isSmall ? '0.6rem' : '0.75rem' }}>
                                 {item.label}
                             </Typography>
-                            <Box sx={{ mt: 'auto' }}>
-                                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#38bdf8', mt: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 0.5 }}>
+                                <Typography variant={isSmall ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', color: '#38bdf8' }}>
                                     {getValue(item.key)}
-                                    <Typography component="span" variant="caption" sx={{ ml: 0.5, color: '#64748b' }}>
-                                        {item.unit}
-                                    </Typography>
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: '#64748b', fontSize: isSmall ? '0.6rem' : '0.75rem' }}>
+                                    {item.unit}
                                 </Typography>
                             </Box>
                         </Paper>

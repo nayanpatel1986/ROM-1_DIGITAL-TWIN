@@ -1,24 +1,22 @@
-version: '3.8'
-
 services:
   influxdb:
     image: influxdb:2.7
-    container_name: romii_influxdb
+    container_name: romi_influxdb
     ports:
       - "8086:8086"
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
       - DOCKER_INFLUXDB_INIT_USERNAME=admin
       - DOCKER_INFLUXDB_INIT_PASSWORD=password123
-      - DOCKER_INFLUXDB_INIT_ORG=romii_org
-      - DOCKER_INFLUXDB_INIT_BUCKET=romii_bucket
+      - DOCKER_INFLUXDB_INIT_ORG=romi_org
+      - DOCKER_INFLUXDB_INIT_BUCKET=romi_bucket
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token
     volumes:
       - influxdb_data:/var/lib/influxdb2
 
   telegraf:
     image: telegraf:1.29
-    container_name: romii_telegraf
+    container_name: romi_telegraf
     hostname: telegraf
     volumes:
       # Mount the telegraf directory so we can edit telegraf.conf from the host/backend
@@ -29,43 +27,38 @@ services:
       - influxdb
     environment:
       - INFLUX_TOKEN=my-super-secret-auth-token
-      - INFLUX_ORG=romii_org
-      - INFLUX_BUCKET=romii_bucket
+      - INFLUX_ORG=romi_org
+      - INFLUX_BUCKET=romi_bucket
       - INFLUX_URL=http://influxdb:8086
 
   backend:
     build: ./backend
-    container_name: romii_backend
+    image: romi_backend:latest
+    container_name: romi_backend
     ports:
       - "5000:5000"
     volumes:
       - ./backend:/app
       - /app/node_modules
-      # Share telegraf config so backend can update it
       - ./telegraf:/app/telegraf_config
-      # Mount Docker socket so backend can restart telegraf
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - INFLUX_URL=http://influxdb:8086
       - INFLUX_TOKEN=my-super-secret-auth-token
-      - INFLUX_ORG=romii_org
-      - INFLUX_BUCKET=romii_bucket
+      - INFLUX_ORG=romi_org
+      - INFLUX_BUCKET=romi_bucket
       - PORT=5000
       - TELEGRAF_CONFIG_PATH=/app/telegraf_config/telegraf.conf
+      - NODE_ENV=production
     depends_on:
       - influxdb
 
   frontend:
     build: ./frontend
-    container_name: romii_frontend
+    image: romi_frontend:latest
+    container_name: romi_frontend
     ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_URL=http://localhost:5000
-      - VITE_API_TARGET=http://backend:5000
+      - "3000:80"
     depends_on:
       - backend
 
